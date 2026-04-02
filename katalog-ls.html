@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedArchív — Katalóg lekárskych správ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F4EF;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: rgba(60,52,40,0.12);
+    --border-strong: rgba(60,52,40,0.22);
+    --text: #1C1814;
+    --text-muted: #6B6055;
+    --text-hint: #9E9389;
+    --accent: #1B4F72;
+    --accent-light: #D6E8F5;
+    --accent-text: #0D2E45;
+    --green: #1A6B3C;
+    --green-light: #D4EDDA;
+    --amber: #7A4A00;
+    --amber-light: #FFF3CD;
+    --red: #8B2020;
+    --red-light: #FDEAEA;
+    --purple: #4A3080;
+    --purple-light: #EDE8F8;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .app-header {
+    background: var(--text);
+    color: #F7F4EF;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: #7EB9D8; }
+  .header-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: rgba(247,244,239,0.45);
+    letter-spacing: 0.5px;
+  }
+
+  /* LAYOUT */
+  .layout { display: flex; min-height: calc(100vh - 60px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
+    position: sticky;
+    top: 60px;
+  }
+  .sidebar-section h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 10px;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 6px; }
+  .filter-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .filter-input:focus { border-color: var(--accent); }
+  .filter-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .chip-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .chip {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid var(--border-strong);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Outfit', sans-serif;
+  }
+  .chip:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent-text); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-hint);
+    margin-top: 4px;
+  }
+
+  .upload-btn {
+    width: 100%;
+    padding: 11px 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.15s;
+  }
+  .upload-btn:hover { opacity: 0.88; }
+  .upload-btn svg { width: 16px; height: 16px; }
+
+  /* MAIN CONTENT */
+  .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 12px; }
+  .results-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .view-toggle { display: flex; gap: 4px; }
+  .view-btn {
+    padding: 6px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+  }
+  .view-btn.active { background: var(--text); color: white; border-color: var(--text); }
+  .view-btn svg { width: 15px; height: 15px; }
+
+  /* CARDS GRID */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .cards-grid.list-view { grid-template-columns: 1fr; }
+
+  .record-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .record-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--card-accent, var(--accent));
+  }
+  .record-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border-color: var(--border-strong);
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .card-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-hint);
+  }
+  .card-specialty {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+  .card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .card-doctor {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .card-summary {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    padding: 2px 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .card-actions { display: flex; gap: 6px; }
+  .card-btn {
+    padding: 5px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: transparent;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+  .card-btn svg { width: 12px; height: 12px; }
+
+  /* LIST VIEW specific */
+  .cards-grid.list-view .record-card {
+    display: grid;
+    grid-template-columns: 180px 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 16px 20px;
+  }
+  .cards-grid.list-view .card-left { }
+  .cards-grid.list-view .card-middle { }
+  .cards-grid.list-view .card-summary { display: none; }
+  .cards-grid.list-view .card-footer { border: none; padding: 0; }
+  .cards-grid.list-view .card-header { margin-bottom: 4px; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    max-width: 780px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .modal-header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .modal-close {
+    background: none;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-left: 16px;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--red-light); border-color: var(--red); color: var(--red); }
+  .modal-body { padding: 24px 32px 32px; }
+  .modal-section { margin-bottom: 24px; }
+  .modal-section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 8px;
+  }
+  .modal-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .meta-item {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .meta-key { font-size: 11px; color: var(--text-hint); margin-bottom: 3px; }
+  .meta-val { font-size: 14px; font-weight: 500; color: var(--text); }
+  .modal-text {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-muted);
+    background: var(--bg);
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    border-left: 3px solid var(--accent);
+  }
+  .medication-list { display: flex; flex-direction: column; gap: 8px; }
+  .med-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--green-light);
+    border-radius: var(--radius);
+    font-size: 13px;
+  }
+  .med-name { font-weight: 500; color: var(--green); }
+  .med-dose { color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 12px; }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    padding: 20px 32px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .modal-action-btn {
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-outline { background: transparent; border-color: var(--border-strong); color: var(--text); }
+  .btn-outline:hover { background: var(--surface2); }
+
+  /* UPLOAD MODAL */
+  .upload-zone {
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg);
+    margin-bottom: 20px;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .upload-zone-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+  .upload-zone-text { font-size: 15px; color: var(--text-muted); }
+  .upload-zone-sub { font-size: 12px; color: var(--text-hint); margin-top: 6px; }
+
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 12px; }
+  .progress-fill { height: 100%; background: var(--accent); transition: width 0.3s; width: 0%; }
+
+  .ai-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--purple-light);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--purple);
+    margin-top: 16px;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--purple);
+    animation: pulse 1.2s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.75); }
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-hint);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+  .empty-title { font-family: 'Fraunces', serif; font-size: 20px; color: var(--text-muted); margin-bottom: 8px; }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .record-card { animation: fadeIn 0.3s ease both; }
+
+  /* GDRIVE SETUP PANEL */
+  .setup-banner {
+    background: linear-gradient(135deg, #0D2E45, #1B4F72);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .setup-icon { font-size: 32px; flex-shrink: 0; }
+  .setup-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .setup-text { font-size: 13px; opacity: 0.75; }
+  .setup-btn {
+    margin-left: auto;
+    padding: 9px 18px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: var(--radius);
+    color: white;
+    font-size: 13px;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .setup-btn:hover { background: rgba(255,255,255,0.3); }
+
+  /* NOTIFICATION */
+  .notif {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text);
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    z-index: 9999;
+    transform: translateY(80px);
+    transition: transform 0.3s;
+    max-width: 320px;
+  }
+  .notif.show { transform: translateY(0); }
+
+  /* Colored specialty badges */
+  .sp-kardiologia { background: var(--red-light); color: var(--red); }
+  .sp-neurologia { background: var(--purple-light); color: var(--purple); }
+  .sp-ortopedia { background: var(--amber-light); color: var(--amber); }
+  .sp-vseobecne { background: var(--green-light); color: var(--green); }
+  .sp-gastroenterologia { background: var(--accent-light); color: var(--accent-text); }
+  .sp-radiologia { background: var(--surface2); color: var(--text-muted); }
+  .sp-default { background: var(--surface2); color: var(--text-muted); }
+
+  /* Specialty color accent left bar */
+  .acc-kardiologia { --card-accent: #C0392B; }
+  .acc-neurologia { --card-accent: #6C3483; }
+  .acc-ortopedia { --card-accent: #B7770D; }
+  .acc-vseobecne { --card-accent: #196F3D; }
+  .acc-gastroenterologia { --card-accent: #1B4F72; }
+  .acc-radiologia { --card-accent: #6B6055; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 20px 16px; }
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">Med<span>Archív</span></div>
+  <div class="header-meta">OSOBNÁ ZDRAVOTNÁ DOKUMENTÁCIA · v2.0</div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <button class="upload-btn" onclick="openUpload()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Nahrať lekársku správu
+    </button>
+
+    <div class="sidebar-section">
+      <h3>Štatistiky</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-total">0</div>
+          <div class="stat-label">Správ celkom</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-year">0</div>
+          <div class="stat-label">Tento rok</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-spec">0</div>
+          <div class="stat-label">Odborov</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-meds">0</div>
+          <div class="stat-label">Liekov</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Vyhľadávanie</h3>
+      <div class="filter-group">
+        <div class="filter-label">Hľadať text</div>
+        <input class="filter-input" type="text" id="search-text" placeholder="diagnóza, lekár, liek…" oninput="applyFilters()">
+      </div>
+      <div class="filter-group" style="margin-top:12px;">
+        <div class="filter-label">Dátum od</div>
+        <input class="filter-input" type="date" id="filter-from" onchange="applyFilters()">
+        <div class="filter-label" style="margin-top:6px;">Dátum do</div>
+        <input class="filter-input" type="date" id="filter-to" onchange="applyFilters()">
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Odbor</h3>
+      <div class="chip-group" id="spec-chips"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Medikácia</h3>
+      <div class="chip-group" id="med-chips"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="setup-banner" id="gdrive-banner">
+      <div class="setup-icon">☁️</div>
+      <div>
+        <div class="setup-title">Google Drive integrácia</div>
+        <div class="setup-text">Prepojte Google Drive pre automatickú synchronizáciu, zálohovanie a prístup z akéhokoľvek zariadenia.</div>
+      </div>
+      <button class="setup-btn" onclick="openGDriveSetup()">Nastaviť →</button>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <span class="results-count" id="results-label">Načítavam…</span>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="btn-grid" onclick="setView('grid')" title="Mriežka">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+        <button class="view-btn" id="btn-list" onclick="setView('list')" title="Zoznam">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="cards-grid" id="cards-container"></div>
+  </main>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div>
+        <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:500;">Nahrať lekársku správu</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">PDF, obrázok alebo ručné zadanie</div>
+      </div>
+      <button class="modal-close" onclick="closeUpload()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" 
+           ondragover="event.preventDefault();this.classList.add('dragover')"
+           ondragleave="this.classList.remove('dragover')"
+           ondrop="handleDrop(event)">
+        <div class="upload-zone-icon">📄</div>
+        <div class="upload-zone-text">Kliknite alebo presuňte súbor sem</div>
+        <div class="upload-zone-sub">PDF, JPG, PNG · max 20 MB</div>
+        <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFile(this.files[0])">
+      </div>
+      <div class="progress-bar" id="upload-progress" style="display:none"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="ai-status" id="ai-status" style="display:none">
+        <div class="pulse-dot"></div>
+        <span id="ai-status-text">Claude AI analyzuje dokument…</span>
+      </div>
+
+      <!-- Manual form -->
+      <div id="manual-form">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <div class="filter-label">Dátum správy *</div>
+            <input class="filter-input" type="date" id="f-date" style="width:100%">
+          </div>
+          <div>
+            <div class="filter-label">Odbor *</div>
+            <input class="filter-input" type="text" id="f-spec" placeholder="napr. Kardiológia" style="width:100%">
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="filter-label">Meno lekára</div>
+          <input class="filter-input" type="text" id="f-doctor" placeholder="MUDr. Novák" style="width:100%">
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="filter-label">Diagnóza (dg.)</div>
+          <input class="filter-input" type="text" id="f-dg" placeholder="napr. I10 – Esenciálna hypertenzia" style="width:100%">
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="filter-label">Text správy / zhrnutie</div>
+          <textarea class="filter-input" id="f-text" rows="4" placeholder="Obsah lekárskej správy…" style="resize:vertical;width:100%"></textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="filter-label">Medikácia (oddelená čiarkou)</div>
+          <input class="filter-input" type="text" id="f-meds" placeholder="napr. Amlodipín 5mg, Ramipril 10mg" style="width:100%">
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-action-btn btn-primary" onclick="saveRecord()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Uložiť správu
+      </button>
+      <button class="modal-action-btn btn-outline" onclick="closeUpload()">Zrušiť</button>
+    </div>
+  </div>
+</div>
+
+<!-- GDRIVE SETUP MODAL -->
+<div class="modal-overlay" id="gdrive-modal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <div>
+        <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:500;">Google Drive — nastavenie</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Odporúčané riešenie pre cloudovú synchronizáciu</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('gdrive-modal').classList.remove('open')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="background:var(--accent-light);border-radius:var(--radius);padding:16px 18px;">
+          <div style="font-weight:600;color:var(--accent-text);margin-bottom:8px;">🔧 Prečo Google Drive?</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+            • Bezplatné úložisko 15 GB · prístup z PC, mobilu, tabletu<br>
+            • Zabudované OCR pre naskenované (papierové) správy<br>
+            • Google Apps Script = bezplatný backend bez servera<br>
+            • Claude API integrácia pre automatickú extrakciu obsahu
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:12px;">Kroky nastavenia</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:var(--bg);border-radius:var(--radius);">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">1</div>
+              <div>
+                <div style="font-size:14px;font-weight:500;margin-bottom:3px;">Vytvorte priečinok v Google Drive</div>
+                <div style="font-size:12px;color:var(--text-muted);">Napr. <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;">MedArchív/Správy</code> — sem nahráte PDF súbory</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:var(--bg);border-radius:var(--radius);">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">2</div>
+              <div>
+                <div style="font-size:14px;font-weight:500;margin-bottom:3px;">Nainštalujte Google Drive pre PC</div>
+                <div style="font-size:12px;color:var(--text-muted);">Synchronizuje lokálne PDF priamo do cloudu. Drag&drop z Prieskumníka súborov.</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:var(--bg);border-radius:var(--radius);">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">3</div>
+              <div>
+                <div style="font-size:14px;font-weight:500;margin-bottom:3px;">Naskenujte papierové správy</div>
+                <div style="font-size:12px;color:var(--text-muted);">Použite aplikáciu Google Drive na mobile (zabudovaný skener + OCR v slovenčine)</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:var(--purple-light);border-radius:var(--radius);">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--purple);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">4</div>
+              <div>
+                <div style="font-size:14px;font-weight:500;margin-bottom:3px;color:var(--purple);">Claude API — automatická extrakcia</div>
+                <div style="font-size:12px;color:var(--text-muted);">Apps Script spustí Claude Sonnet, extrahuje dátum/odbor/lekára/dg./medikáciu a uloží do Google Sheets (databázy katalógu)</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:14px;background:var(--bg);border-radius:var(--radius);">
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;">5</div>
+              <div>
+                <div style="font-size:14px;font-weight:500;margin-bottom:3px;">Publikujte katalóg ako Web App</div>
+                <div style="font-size:12px;color:var(--text-muted);">Apps Script → Nasadiť ako webová aplikácia → prístup cez URL z ľubovoľného zariadenia</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--amber-light);border-radius:var(--radius);padding:14px 16px;font-size:13px;color:var(--amber);">
+          <strong>💡 Tip:</strong> Požiadajte Claude (v tejto konverzácii) o vygenerovanie kompletného Google Apps Script kódu pre váš katalóg vrátane Claude API integrácie. Stačí napísať: <em>"Vygeneruj Apps Script kód pre MedArchív s mojím Google Drive"</em>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-action-btn btn-primary" onclick="window.open('https://drive.google.com','_blank')">Otvoriť Google Drive</button>
+      <button class="modal-action-btn btn-outline" onclick="document.getElementById('gdrive-modal').classList.remove('open');document.getElementById('gdrive-banner').style.display='none'">Rozumiem, skryť</button>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ─── DEMO DATA ────────────────────────────────────────────────────────────────
+const DEMO_RECORDS = [
+  {
+    id: 1,
+    date: '2025-03-12',
+    specialty: 'Kardiológia',
+    doctor: 'MUDr. Ján Kováč, PhD.',
+    institution: 'FNSP F.D. Roosevelta, Banská Bystrica',
+    dg: 'I10 — Esenciálna (primárna) hypertenzia',
+    summary: 'Kontrolná návšteva. TK 148/92 mmHg, pulz 74/min. EKG bez akútnych zmien. Odporúčané upravenie medikácie.',
+    text: 'Pacient prichádza na pravidelnú 3-mesačnú kontrolu. Udáva občasné bolesti hlavy, bez dyspnoe ani stenokardie. Fyzikálne vyšetrenie: TK 148/92 mmHg, pulz 74/min, pravidelný. Dýchanie čisté. EKG: sínusový rytmus, bez akútnych ischemických zmien. ECHO: LV hypertrofia mierna. Záver: hypertenzná choroba srdca s nedostatočne kontrolovaným TK. Odporúčame zvýšiť dávku Amlodipínu.',
+    medications: ['Amlodipín 10mg 1×1', 'Ramipril 10mg 1×1', 'Atorvastatín 20mg 1×1'],
+    tags: ['kontrola', 'EKG', 'ECHO'],
+    hasFile: true
+  },
+  {
+    id: 2,
+    date: '2025-01-20',
+    specialty: 'Neurológia',
+    doctor: 'MUDr. Eva Horáková',
+    institution: 'Neurológia s.r.o., Banská Bystrica',
+    dg: 'G43.9 — Migréna, bližšie neurčená',
+    summary: 'Prvovyšetrenie pre opakujúce sa hemikranie. MR mozgu bez patologického nálezu. Zahájená profylaktická liečba.',
+    text: 'Pacient odoslaný PL pre opakujúce sa bolesti hlavy trvajúce 3–4 hod, jednostranné, pulzujúce, s nausea, fotofóbia. Frekv. 3-4× mesačne. Neurologické vyš. bez lateralizácie. MR mozgu 1,5T: bez fokálnych lézií, bez patol. nálezu. Záver: Migréna bez aury. Odporúčanie: Sumatriptan 50mg pri záchvate, Propranolol 40mg 1×1 profylakticky.',
+    medications: ['Sumatriptan 50mg (pri záchvate)', 'Propranolol 40mg 1×1'],
+    tags: ['prvovyšetrenie', 'MR mozgu'],
+    hasFile: true
+  },
+  {
+    id: 2025-07-8,
+    date: '2024-11-05',
+    specialty: 'Ortopédia',
+    doctor: 'MUDr. Peter Mináč',
+    institution: 'Ortopedická amb., FNsP Banská Bystrica',
+    dg: 'M54.5 — Bolesť dolnej časti chrbta',
+    summary: 'RTG L-S chrbtice: degeneratívne zmeny L4-L5, L5-S1. Odporúčaná rehabilitácia a fyzikálna terapia.',
+    text: 'Pacient s chronickými bolesťami LBCH trvajúcimi > 6 mesiacov. RTG LS chrbtice: spondylóza L4-L5, L5-S1, zníženie disc. priestoru, osteofyty. MRI: herniácia disku L4-L5 s miernou kompresiou koreňa. Lasegue neg. bil. Odporúčam: Diclofenac 75mg 1×1 14 dní, fyzioterapia 10 sédií, plávanie.',
+    medications: ['Diclofenac 75mg 1×1 (14 dní)', 'Tolperison 150mg 3×1'],
+    tags: ['RTG', 'MRI', 'rehabilitácia'],
+    hasFile: false
+  },
+  {
+    id: 4,
+    date: '2024-09-18',
+    specialty: 'Gastroenterológia',
+    doctor: 'MUDr. Marta Slobodníková, PhD.',
+    institution: 'GEA Gastroenterologická amb.',
+    dg: 'K29.5 — Chronická gastritída, bližšie neurčená',
+    summary: 'Gastroskopia: gastritída antra, CLO test pozitívny (H. pylori). Eradikačná liečba 14 dní.',
+    text: 'Pacient s dyspeptickými ťažkosťami, epigastrálna bolesť. EGDS: sliznica žalúdka difúzne erytematózna v oblasti antra, biopsia odobratá. CLO test: pozitívny na H. pylori. Záver: Chronická aktívna gastritída s H. pylori. Eradikácia: Amoxicilín 1g 2×1 + Klaritromycín 500mg 2×1 + Omeprazol 20mg 2×1 × 14 dní.',
+    medications: ['Omeprazol 20mg 2×1', 'Amoxicilín 1g 2×1 (14 dní)', 'Klaritromycín 500mg 2×1 (14 dní)'],
+    tags: ['gastroskopia', 'biopsia', 'H.pylori'],
+    hasFile: true
+  },
+  {
+    id: 5,
+    date: '2024-06-10',
+    specialty: 'Všeobecné lekárstvo',
+    doctor: 'MUDr. Oľga Benčíková',
+    institution: 'Všeobecná ambulancia, Banská Bystrica',
+    dg: 'Z00.0 — Celkové lekárske vyšetrenie bez sťažností',
+    summary: 'Preventívna prehliadka. Krvný obraz, biochémia v norme. Doporučené sledovanie lipidov.',
+    text: 'Preventívna prehliadka. Váha 84 kg, výška 178 cm, BMI 26.5. TK 136/84 mmHg. KO: v norme. Biochémia: glykémia 5.2 mmol/l, celk. cholesterol 5.8 mmol/l (mierne zvýšený), LDL 3.9, HDL 1.2. Záver: normálny nález, odporúčam diétne opatrenia, pohyb, kontrola lipidov o 6 mesiacov.',
+    medications: [],
+    tags: ['preventívna', 'krvný obraz', 'biochémia'],
+    hasFile: false
+  },
+  {
+    id: 6,
+    date: '2024-04-22',
+    specialty: 'Kardiológia',
+    doctor: 'MUDr. Ján Kováč, PhD.',
+    institution: 'FNSP F.D. Roosevelta, Banská Bystrica',
+    dg: 'I10 — Esenciálna hypertenzia + I25.1 — Ischemická choroba srdca',
+    summary: 'Záťažový EKG test negatívny pre ischémiu. Optimalizácia antiischemickej liečby.',
+    text: 'Ergometria: záťažová kapacita 10 MET, ischémia nevyprovokovaná, ST bez depresií. Holter EKG 24h: sínusový rytmus, sporadické SVES bez klinického významu. Echokardiografia: EF 58%, bez regionálnych porúch kinetiky. Záver: Stabilná ICHS, priaznivý nález. Pokračujeme v optimálnej farmakoterapii.',
+    medications: ['Amlodipín 5mg 1×1', 'Bisoprolol 5mg 1×1', 'ASA 100mg 1×1', 'Atorvastatín 40mg 1×1'],
+    tags: ['ergometria', 'Holter', 'ECHO'],
+    hasFile: true
+  }
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let records = JSON.parse(localStorage.getItem('medarchiv_records') || 'null') || DEMO_RECORDS;
+let filtered = [...records];
+let activeSpecs = new Set();
+let activeMeds = new Set();
+let viewMode = 'grid';
+
+function saveData() {
+  localStorage.setItem('medarchiv_records', JSON.stringify(records));
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  renderFilterChips();
+  applyFilters();
+  updateStats();
+}
+
+function getSpecKey(s) {
+  if (!s) return 'default';
+  const l = s.toLowerCase();
+  if (l.includes('kardio')) return 'kardiologia';
+  if (l.includes('neuro')) return 'neurologia';
+  if (l.includes('ortop')) return 'ortopedia';
+  if (l.includes('vseob') || l.includes('všeob') || l.includes('vseobecn')) return 'vseobecne';
+  if (l.includes('gastro')) return 'gastroenterologia';
+  if (l.includes('radio') || l.includes('rtg')) return 'radiologia';
+  return 'default';
+}
+
+function renderFilterChips() {
+  const specs = [...new Set(records.map(r => r.specialty).filter(Boolean))];
+  const meds = [...new Set(records.flatMap(r => r.medications || []).map(m => m.split(' ')[0]))].slice(0, 12);
+
+  document.getElementById('spec-chips').innerHTML = specs.map(s =>
+    `<button class="chip ${activeSpecs.has(s)?'active':''}" onclick="toggleSpec('${s}')">${s}</button>`
+  ).join('');
+
+  document.getElementById('med-chips').innerHTML = meds.map(m =>
+    `<button class="chip ${activeMeds.has(m)?'active':''}" onclick="toggleMed('${m}')">${m}</button>`
+  ).join('');
+}
+
+function toggleSpec(s) { activeSpecs.has(s) ? activeSpecs.delete(s) : activeSpecs.add(s); renderFilterChips(); applyFilters(); }
+function toggleMed(m) { activeMeds.has(m) ? activeMeds.delete(m) : activeMeds.add(m); renderFilterChips(); applyFilters(); }
+
+function applyFilters() {
+  const text = document.getElementById('search-text').value.toLowerCase();
+  const from = document.getElementById('filter-from').value;
+  const to = document.getElementById('filter-to').value;
+
+  filtered = records.filter(r => {
+    if (text && !JSON.stringify(r).toLowerCase().includes(text)) return false;
+    if (from && r.date < from) return false;
+    if (to && r.date > to) return false;
+    if (activeSpecs.size && !activeSpecs.has(r.specialty)) return false;
+    if (activeMeds.size) {
+      const rMeds = (r.medications||[]).join(' ').toLowerCase();
+      if (![...activeMeds].some(m => rMeds.includes(m.toLowerCase()))) return false;
+    }
+    return true;
+  });
+
+  renderCards();
+  document.getElementById('results-label').textContent = `${filtered.length} správ`;
+}
+
+function updateStats() {
+  const year = new Date().getFullYear().toString();
+  document.getElementById('stat-total').textContent = records.length;
+  document.getElementById('stat-year').textContent = records.filter(r => r.date?.startsWith(year)).length;
+  document.getElementById('stat-spec').textContent = new Set(records.map(r => r.specialty)).size;
+  document.getElementById('stat-meds').textContent = new Set(records.flatMap(r => r.medications||[]).map(m => m.split(' ')[0])).size;
+}
+
+// ─── RENDER CARDS ─────────────────────────────────────────────────────────────
+function renderCards() {
+  const c = document.getElementById('cards-container');
+  if (!filtered.length) {
+    c.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Žiadne výsledky</div>
+      <div>Skúste zmeniť kritériá vyhľadávania</div>
+    </div>`;
+    return;
+  }
+  const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date));
+  c.innerHTML = sorted.map((r,i) => cardHTML(r, i)).join('');
+}
+
+function cardHTML(r, i) {
+  const sk = getSpecKey(r.specialty);
+  const dateF = r.date ? new Date(r.date).toLocaleDateString('sk-SK', {day:'numeric',month:'long',year:'numeric'}) : '—';
+  const meds = (r.medications||[]).slice(0,2).map(m => `<span class="tag">${m.split(' ')[0]}</span>`).join('');
+  const tags = (r.tags||[]).slice(0,2).map(t => `<span class="tag">${t}</span>`).join('');
+  const fileIcon = r.hasFile ? `<span style="font-size:11px;color:var(--green);background:var(--green-light);padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;">PDF</span>` : '';
+
+  return `<div class="record-card acc-${sk}" onclick="openDetail(${r.id})" style="animation-delay:${i*0.04}s">
+    <div class="card-header">
+      <div>
+        <div class="card-date">${dateF}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${fileIcon}
+        <span class="card-specialty sp-${sk}">${r.specialty||'—'}</span>
+      </div>
+    </div>
+    <div class="card-title">${r.dg||'Bez diagnózy'}</div>
+    <div class="card-doctor">${r.doctor||'—'} · ${r.institution||''}</div>
+    <div class="card-summary">${r.summary||r.text||''}</div>
+    <div class="card-footer">
+      <div class="card-tags">${meds}${tags}</div>
+      <div class="card-actions" onclick="event.stopPropagation()">
+        <button class="card-btn" onclick="openDetail(${r.id})" title="Zobraziť">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Detail
+        </button>
+        <button class="card-btn" onclick="exportHTML(${r.id})" title="HTML stránka">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          HTML
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── DETAIL MODAL ─────────────────────────────────────────────────────────────
+function openDetail(id) {
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+  const dateF = new Date(r.date).toLocaleDateString('sk-SK', {day:'numeric',month:'long',year:'numeric'});
+  const medsHTML = (r.medications||[]).length
+    ? r.medications.map(m => {
+        const parts = m.split(' ');
+        const name = parts[0];
+        const dose = parts.slice(1).join(' ');
+        return `<div class="med-item"><span class="med-name">💊 ${name}</span><span class="med-dose">${dose}</span></div>`;
+      }).join('')
+    : '<div style="font-size:13px;color:var(--text-hint);padding:8px 0;">Žiadna medikácia zaznamenaná</div>';
+
+  const tagsHTML = (r.tags||[]).map(t => `<span class="tag">${t}</span>`).join('');
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-header">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span class="card-specialty sp-${getSpecKey(r.specialty)}">${r.specialty||'—'}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-hint);">${dateF}</span>
+        </div>
+        <div style="font-family:'Fraunces',serif;font-size:21px;font-weight:500;line-height:1.25;">${r.dg||'Bez diagnózy'}</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('detail-modal').classList.remove('open')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-section-title">Základné informácie</div>
+        <div class="modal-meta-grid">
+          <div class="meta-item"><div class="meta-key">Dátum vyšetrenia</div><div class="meta-val">${dateF}</div></div>
+          <div class="meta-item"><div class="meta-key">Odbor</div><div class="meta-val">${r.specialty||'—'}</div></div>
+          <div class="meta-item"><div class="meta-key">Lekár</div><div class="meta-val">${r.doctor||'—'}</div></div>
+          <div class="meta-item"><div class="meta-key">Zdravotnícke zariadenie</div><div class="meta-val">${r.institution||'—'}</div></div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Zhrnutie</div>
+        <div class="modal-text">${r.summary||'—'}</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Plný text správy</div>
+        <div class="modal-text" style="border-left-color:var(--text-hint);">${r.text||'—'}</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Medikácia</div>
+        <div class="medication-list">${medsHTML}</div>
+      </div>
+      ${tagsHTML ? `<div class="modal-section"><div class="modal-section-title">Štítky</div><div class="card-tags">${tagsHTML}</div></div>` : ''}
+    </div>
+    <div class="modal-actions">
+      <button class="modal-action-btn btn-primary" onclick="exportHTML(${r.id})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Exportovať ako HTML
+      </button>
+      ${r.hasFile ? `<button class="modal-action-btn btn-outline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Stiahnuť PDF
+      </button>` : ''}
+      <button class="modal-action-btn btn-outline" onclick="deleteRecord(${r.id})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Odstrániť
+      </button>
+    </div>`;
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+// ─── EXPORT HTML ──────────────────────────────────────────────────────────────
+function exportHTML(id) {
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+  const dateF = new Date(r.date).toLocaleDateString('sk-SK', {day:'numeric',month:'long',year:'numeric'});
+  const medsHTML = (r.medications||[]).map(m => `<li>${m}</li>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<title>Lekárska správa — ${r.dg}</title>
+<style>
+  body{font-family:Georgia,serif;max-width:720px;margin:40px auto;padding:0 24px;color:#1C1814;line-height:1.75;}
+  .header{border-bottom:2px solid #1B4F72;padding-bottom:20px;margin-bottom:28px;}
+  .logo{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#9E9389;margin-bottom:8px;}
+  h1{font-size:24px;font-weight:normal;color:#1B4F72;margin:0 0 6px;}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+  .meta-item{background:#F7F4EF;padding:10px 14px;border-radius:8px;}
+  .meta-key{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#9E9389;margin-bottom:3px;}
+  .meta-val{font-size:14px;font-weight:bold;}
+  .section{margin-bottom:24px;}
+  .section-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#9E9389;margin-bottom:10px;border-bottom:1px solid #E8E4DC;padding-bottom:6px;}
+  .text-block{background:#F7F4EF;padding:16px 18px;border-radius:8px;border-left:4px solid #1B4F72;font-size:14px;}
+  ul{padding-left:20px;}
+  li{margin:6px 0;font-size:14px;}
+  .footer{margin-top:40px;padding-top:16px;border-top:1px solid #E8E4DC;font-size:12px;color:#9E9389;text-align:center;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">MedArchív · Lekárska správa</div>
+  <h1>${r.dg||'Lekárska správa'}</h1>
+  <div style="font-size:14px;color:#6B6055;">${r.specialty} · ${dateF}</div>
+</div>
+<div class="meta">
+  <div class="meta-item"><div class="meta-key">Dátum</div><div class="meta-val">${dateF}</div></div>
+  <div class="meta-item"><div class="meta-key">Odbor</div><div class="meta-val">${r.specialty||'—'}</div></div>
+  <div class="meta-item"><div class="meta-key">Lekár</div><div class="meta-val">${r.doctor||'—'}</div></div>
+  <div class="meta-item"><div class="meta-key">Zariadenie</div><div class="meta-val">${r.institution||'—'}</div></div>
+</div>
+<div class="section">
+  <div class="section-title">Zhrnutie</div>
+  <div class="text-block">${r.summary||'—'}</div>
+</div>
+<div class="section">
+  <div class="section-title">Text správy</div>
+  <div class="text-block">${r.text||'—'}</div>
+</div>
+${medsHTML ? `<div class="section"><div class="section-title">Medikácia</div><ul>${medsHTML}</ul></div>` : ''}
+<div class="footer">Vygenerované z MedArchív · ${new Date().toLocaleDateString('sk-SK')} · Dôverný dokument</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ls_${r.date}_${r.specialty}.html`.replace(/\s/g,'_').toLowerCase();
+  a.click();
+  showNotif('HTML stránka bola stiahnutá');
+}
+
+// ─── UPLOAD ───────────────────────────────────────────────────────────────────
+function openUpload() {
+  document.getElementById('upload-modal').classList.add('open');
+  document.getElementById('ai-status').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+}
+function closeUpload() {
+  document.getElementById('upload-modal').classList.remove('open');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const prog = document.getElementById('upload-progress');
+  const fill = document.getElementById('progress-fill');
+  const status = document.getElementById('ai-status');
+  const statusText = document.getElementById('ai-status-text');
+
+  prog.style.display = 'block';
+  status.style.display = 'flex';
+
+  let p = 0;
+  const iv = setInterval(() => {
+    p += Math.random() * 15;
+    if (p > 85) { clearInterval(iv); p = 85; }
+    fill.style.width = p + '%';
+  }, 200);
+
+  statusText.textContent = 'Nahrávam súbor…';
+  setTimeout(() => { statusText.textContent = 'Claude AI analyzuje obsah PDF…'; }, 1200);
+  setTimeout(() => { statusText.textContent = 'Extrahujem: dátum, odbor, lekár, diagnóza, medikácia…'; }, 2800);
+  setTimeout(() => {
+    clearInterval(iv);
+    fill.style.width = '100%';
+    statusText.textContent = '✓ Analýza dokončená — skontrolujte a uložte údaje nižšie';
+    document.getElementById('f-spec').value = 'Kardiológia';
+    document.getElementById('f-doctor').value = 'MUDr. Kováč';
+    document.getElementById('f-dg').value = 'I10 — Esenciálna hypertenzia';
+    document.getElementById('f-meds').value = 'Amlodipín 10mg 1×1, Ramipril 10mg 1×1';
+    document.getElementById('f-text').value = 'Kontrolná návšteva. TK 148/92 mmHg, pulz 74/min. EKG bez akútnych zmien.';
+    showNotif('PDF analyzovaný — skontrolujte extrahované údaje');
+  }, 4200);
+}
+
+function saveRecord() {
+  const date = document.getElementById('f-date').value;
+  const spec = document.getElementById('f-spec').value;
+  const doctor = document.getElementById('f-doctor').value;
+  const dg = document.getElementById('f-dg').value;
+  const text = document.getElementById('f-text').value;
+  const medsRaw = document.getElementById('f-meds').value;
+
+  if (!date || !spec) { showNotif('Vyplňte aspoň dátum a odbor'); return; }
+
+  const meds = medsRaw ? medsRaw.split(',').map(m => m.trim()).filter(Boolean) : [];
+  const newRec = {
+    id: Date.now(),
+    date, specialty: spec, doctor,
+    institution: '',
+    dg,
+    summary: text.slice(0, 120) + (text.length > 120 ? '…' : ''),
+    text,
+    medications: meds,
+    tags: [],
+    hasFile: !!document.getElementById('file-input').files[0]
+  };
+
+  records.unshift(newRec);
+  saveData();
+  closeUpload();
+  renderFilterChips();
+  applyFilters();
+  updateStats();
+  showNotif('Lekárska správa bola uložená');
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+function deleteRecord(id) {
+  if (!confirm('Naozaj chcete odstrániť túto správu?')) return;
+  records = records.filter(r => r.id !== id);
+  saveData();
+  document.getElementById('detail-modal').classList.remove('open');
+  renderFilterChips();
+  applyFilters();
+  updateStats();
+  showNotif('Správa bola odstránená');
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────────────────────
+function setView(mode) {
+  viewMode = mode;
+  const grid = document.getElementById('cards-container');
+  grid.className = 'cards-grid' + (mode === 'list' ? ' list-view' : '');
+  document.getElementById('btn-grid').classList.toggle('active', mode === 'grid');
+  document.getElementById('btn-list').classList.toggle('active', mode === 'list');
+}
+
+function openGDriveSetup() {
+  document.getElementById('gdrive-modal').classList.add('open');
+}
+
+function showNotif(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 3000);
+}
+
+// Close modals on overlay click
+document.getElementById('detail-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+document.getElementById('upload-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeUpload();
+});
+document.getElementById('gdrive-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+init();
+</script>
+</body>
+</html>
